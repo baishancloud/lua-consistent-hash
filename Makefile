@@ -24,7 +24,6 @@ consistenthash.so: consistenthash.lo
 
 lib: consistenthash.c
 	$(CC) -o consistenthash.so consistenthash.c $(LFLAGS) $(LIBS)
-	lua testtt.lua
 
 standalone: consistenthash.c
 	$(CC) -o consistenthash consistenthash.c -llua $(LIBS)
