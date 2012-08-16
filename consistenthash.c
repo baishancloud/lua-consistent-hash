@@ -33,10 +33,10 @@
 
 #define dd
 #define dinfo
-/* #define derr */
+#define derr
 /* #define dd( fmt, ... )      fprintf( stdout, "DEBUG " WHERESTR fmt "\n", WHEREARG, ##__VA_ARGS__ ) */
 /* #define dinfo( fmt, ... )   fprintf( stdout, " INFO " WHERESTR fmt "\n", WHEREARG, ##__VA_ARGS__ ) */
-#define derr( fmt, ... )    fprintf( stderr, "ERROR " WHERESTR fmt "\n", WHEREARG, ##__VA_ARGS__ )
+/* #define derr( fmt, ... )    fprintf( stderr, "ERROR " WHERESTR fmt "\n", WHEREARG, ##__VA_ARGS__ ) */
 
 #define memzero(buf, n)       (void) memset(buf, 0, n)
 
