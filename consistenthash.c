@@ -32,9 +32,9 @@
 #define WHERESTR  "[%s, %d]: "
 #define WHEREARG  __FILE__, __LINE__
 
-#define dd
-#define dinfo
-#define derr
+#define dd( fmt, ... )
+#define dinfo( fmt, ... )
+#define derr( fmt, ... )
 /* #define dd( fmt, ... )      fprintf( stdout, "DEBUG " WHERESTR fmt "\n", WHEREARG, ##__VA_ARGS__ ) */
 /* #define dinfo( fmt, ... )   fprintf( stdout, " INFO " WHERESTR fmt "\n", WHEREARG, ##__VA_ARGS__ ) */
 /* #define derr( fmt, ... )    fprintf( stderr, "ERROR " WHERESTR fmt "\n", WHEREARG, ##__VA_ARGS__ ) */
@@ -426,16 +426,14 @@ point_search( continuum_t *conti, uint32_t p )
 get_continuum( lua_State *L, int i )
 {
     void **p;
-    void *userdata;
 
     p = luaL_checkudata( L, i, LUA_CONSIS_HASH_TYPENAME );
     if ( NULL == p ) {
         luaL_argerror( L, i, "Expect " LUA_CONSIS_HASH_TYPENAME );
-        return;
+        return NULL;
     }
 
-    dinfo( "got lua userdata: %p", p );
-    dinfo( "got userdata: %p", *p );
+    dinfo( "got lua userdata: %p which is pointer: %p", p, *p );
 
     return p;
 }
@@ -513,7 +511,7 @@ lch_get( lua_State *L )
             n_names++;
 
             name = &conti->names[ conti->nodes[ i_node ].name_idx ];
-            lua_pushlstring( L, name->data, name->len );
+            lua_pushlstring( L, (char*)name->data, name->len );
         }
     }
 
@@ -523,7 +521,6 @@ lch_get( lua_State *L )
 static int lch_new( lua_State *L ) {
 
     void        **p;
-    void         *userdata;
     continuum_t  *conti;
     const char   *s;
     int           i;
@@ -532,6 +529,7 @@ static int lch_new( lua_State *L ) {
     int           n;
     int           l;
     uint32_t      hash_value;
+    str_t        *nm;
     str_t        *name;
     const char   *err;
     size_t        len;
@@ -633,7 +631,7 @@ static int lch_new( lua_State *L ) {
         s = lua_tolstring( L, -1, &len );
 
         conti->names[ i ].len = len;
-        conti->names[ i ].data = &conti->namebuf[ namebuf_p ];
+        conti->names[ i ].data = (u_char*)&conti->namebuf[ namebuf_p ];
         conti->names[ i ].used = 0;
         memcpy( conti->names[ i ].data, ( u_char* )s, len );
 
@@ -675,18 +673,19 @@ static int lch_new( lua_State *L ) {
 
     qsort( conti->nodes, conti->n_nodes, sizeof( hashnode_t ), ( const void* )node_cmp );
 
+
     step = (uint32_t) (0xffffffff / conti->n_buckets);
     for ( i = 0; i < conti->n_buckets; i++ ) {
         i_nodes = point_search( conti, step * i );
         conti->buckets[ i ] = i_nodes;
         k = conti->nodes[ i_nodes ].name_idx;
-        str_t *nm = &conti->names[ k ];
+        nm = &conti->names[ k ];
         nm->used++;
         dd( "bucket %d point to node[%d], to name index=%d, %.*s", i, i_nodes, k, nm->len, nm->data );
     }
 
     for ( i = 0; i < n; i++ ) {
-        str_t *nm = &conti->names[ i ];
+        nm = &conti->names[ i ];
         dd( "name %.*s used %d times", nm->len, nm->data, nm->used );
     }
 
@@ -710,7 +709,6 @@ static int lch_new( lua_State *L ) {
 static int lch_close( lua_State *L ) {
     void **p;
     dinfo( "gc called" );
-    continuum_t *conti;
 
     p = get_continuum( L, 1 );
     if ( NULL != *p ) {
