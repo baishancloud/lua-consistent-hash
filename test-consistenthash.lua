@@ -22,6 +22,14 @@ end
 
 local x = tt:new( servers )
 
+local a, b, c
+a, b, c = x:get( '1', "3" )
+print( a )
+print( b )
+print( c )
+
+
+
 function main()
     return tt.get, x, "123"
 end
@@ -31,23 +39,25 @@ table.remove( servers, 1 )
 -- segment fault passing nil
 local y = tt:new( servers )
 
+local xx, yy
+
 i = 1
 n = 1024 * 1024
 -- n = 100
 inc = 0
 while i<=n do
-    server = tt.get( x, tostring( i ) )
+    xx, server, yy = tt.get( x, tostring( i ), 3 )
     -- s2 = y:get( i )
     -- if s2 ~= server then
     --     inc = inc + 1
     --     -- print( inc )
     -- end
-    -- server_count[ server ] = server_count[ server ] + 1
+    server_count[ server ] = server_count[ server ] + 1
     -- print( server )
     i = i + 1
 end
-print( inc )
+-- print( inc )
 
--- for server, num in pairs(server_count) do
---     print( server .. ' = ' ..  tostring( num ) )
--- end
+for server, num in pairs(server_count) do
+    print( server .. ' = ' ..  tostring( num ) )
+end

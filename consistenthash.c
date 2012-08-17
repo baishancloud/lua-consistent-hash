@@ -25,6 +25,7 @@
 #define N_BUCKETS ( 1024*16 )
 #define MAX_NAME_LEN 128
 #define MAX_NODE_HASH_SRC_LEN 160
+#define MAX_REPLICA 16
 
 
 
@@ -439,32 +440,84 @@ get_continuum( lua_State *L, int i )
     return p;
 }
 
-static int
+    static int
 lch_get( lua_State *L )
 {
     void        **p;
     continuum_t  *conti;
+
     size_t        len;
     const char   *s;
     uint32_t      hash_value;
     size_t        i_node;
+    int           n_replica;
+    int           i;
     str_t        *name;
+    int           i_name;
+    int           i_names[ MAX_REPLICA ];
+    int           n_names;
+    int           exists;
 
-    /* p = get_continuum( L, 1 ); */
-    p = get_continuum( L, -2 );
+
+    p = get_continuum( L, 1 );
     conti = *p;
 
-    /* s = luaL_checklstring( L, 2, &len ); */
-    s = luaL_checklstring( L, -1, &len );
+    s = luaL_checklstring( L, 2, &len );
+
+    if ( lua_isnumber( L, 3 ) ) {
+        n_replica = lua_tointeger( L, 3 );
+        if ( n_replica > MAX_REPLICA ) {
+            n_replica = MAX_REPLICA;
+        }
+        if ( n_replica >= conti->n ) {
+            n_replica = conti->n;
+        }
+    }
+    else {
+        n_replica = 1;
+    }
+
+    derr( "n_replica=%d", n_replica );
 
     hash_value = ( uint32_t )crc32_short( ( u_char* )s, len );
     hash_value = hash_value >> 18;
-    dd( "hash value of %.*s is %d", len, s, hash_value );
+    derr( "hash value of %.*s is %d", len, s, hash_value );
 
     i_node = conti->buckets[ hash_value ];
-    name = &conti->names[ conti->nodes[ i_node ].name_idx ];
-    lua_pushlstring( L, name->data, name->len );
-    return 1;
+
+    for ( i = 0; i < MAX_REPLICA; i++ ) {
+        i_names[i] = -1;
+    }
+    n_names = 0;
+
+    while ( n_names < n_replica ) {
+
+        exists = 0;
+        i_name = conti->nodes[ i_node ].name_idx;
+
+        for ( i = 0; i < n_names; i++ ) {
+            if ( i_names[i] == i_name ) {
+                exists = 1;
+                break;
+            }
+        }
+
+        if ( exists ) {
+            i_node++;
+            if ( i_node >= conti->n_nodes ) {
+                i_node = 0;
+            }
+        }
+        else {
+            i_names[ n_names ] = i_name;
+            n_names++;
+
+            name = &conti->names[ conti->nodes[ i_node ].name_idx ];
+            lua_pushlstring( L, name->data, name->len );
+        }
+    }
+
+    return n_replica;
 }
 
 static int lch_new( lua_State *L ) {
@@ -509,13 +562,13 @@ static int lch_new( lua_State *L ) {
         s = lua_tolstring( L, -1, &len );
         if ( NULL == s ) {
             err = lua_pushfstring(L, "Non-string table element at %d", n);
-            luaL_argerror( L, 1, err );
+            luaL_argerror( L, 2, err );
             return 0;
         }
 
         if ( len > MAX_NAME_LEN ) {
             err = lua_pushfstring(L, "String too long: %.*s", len, s);
-            luaL_argerror( L, 1, err );
+            luaL_argerror( L, 2, err );
             return 0;
         }
 
@@ -525,6 +578,11 @@ static int lch_new( lua_State *L ) {
         n_nodes += N_NODE_PER_NAME * 1; /* TODO weights */
 
         dd( "entry: %s len=%d, total namebuf_size=%d", s, len, namebuf_size );
+    }
+
+    if ( 0 == n ) {
+        luaL_argerror( L, 2, "Empty table" );
+        return 0;
     }
 
 
@@ -667,14 +725,12 @@ static int lch_close( lua_State *L ) {
     return 0;
 }
 
-
 static const luaL_Reg lch_funcs[] = {
     { "new",    lch_new },
     { "get",    lch_get },
     /* { "echo",    lch_echo }, */
     { NULL, NULL }
 };
-
 
 int luaopen_consistenthash(lua_State *L) {
 
