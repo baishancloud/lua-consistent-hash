@@ -26,7 +26,7 @@ function new(nodes)
 		getn		= function (self, key, n)
 						local t = {}
 						local f = self.h:get(key)
-						t[1] = sefl.nodes[f+1]
+						t[1] = self.nodes[f+1]
 						for i=2, n, 1 do
 							t[i] = next(self)
 						end
