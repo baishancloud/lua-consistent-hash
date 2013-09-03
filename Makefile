@@ -1,37 +1,23 @@
-OMIT_FRAME_PTR = -fomit-frame-pointer
+OBJS= crc32.o consistent_hash.o
+CC= gcc
+CFLAGS = -Wall -fPIC -g -O2 #-DDEBUG
+OBJ_DIR= ./objs
 
-LUAPKG = lua5.2
-CFLAGS = `pkg-config $(LUAPKG) --cflags` -fPIC -O3 -Wall $(OMIT_FRAME_PTR)
-# CFLAGS = `pkg-config $(LUAPKG) --cflags` -fPIC -O0 -g3 -Wall
-LFLAGS = -shared
+.c.o:
+	$(CC) $(CFLAGS) -o $(OBJ_DIR)/$@ -c $*.c
 
+all: $(OBJS)
+	@echo "built"
 
-## If your system doesn't have pkg-config or if you do not want to get the
-## install path from Lua, comment out the previous lines and uncomment and
-## change the following ones according to your building environment.
+lua: $(OBJS)
+	cd lua && make
 
-#CFLAGS = -I/usr/local/include/ -fPIC -O3 -Wall $(OMIT_FRAME_PTR)
-#LFLAGS = -shared
-#INSTALL_PATH = /usr/local/lib/lua/5.2/
+test: $(OBJS) test.o
+	cd $(OBJ_DIR) && $(CC) $(CFLAGS) -o test $(OBJS) test.o
+	@ $(OBJ_DIR)/test
 
-
-all: consistenthash.so
-
-consistenthash.lo: consistenthash.c
-	$(CC) -o consistenthash.lo -c $(CFLAGS) consistenthash.c
-
-consistenthash.so: consistenthash.lo
-	$(CC) -o consistenthash.so $(LFLAGS) $(LIBS) consistenthash.lo
-
-# consistenthash.so: consistenthash.c
-#         $(CC) -o consistenthash.so consistenthash.c $(LFLAGS) $(LIBS)
-
-standalone: consistenthash.c
-	$(CC) -o consistenthash consistenthash.c -llua $(LIBS)
 
 clean:
-	$(RM) consistenthash.so consistenthash.lo
-
-test: consistenthash.so test_tt.lua
-	lua test_tt.lua
-
+	@cd $(OBJ_DIR)
+	@rm -f $(OBJS) test.o test
+	@cd lua && make clean

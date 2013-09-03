@@ -1,6 +1,6 @@
 lua-consistent-hash-module
 ==========================
 
-lua consistent hash module written in c
+consistent hash for multi language(c/lua/php/python)
 
 Status: Alpha
