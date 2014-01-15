@@ -88,8 +88,12 @@ static inline int kv_comp(const kv_t *a, const kv_t *b)
 	//return (a->k > b->k ? 1 : (a->k == b->k ? 0 : -1));
 	if (a->k > b->k) return 1;
 	if (a->k < b->k) return -1;
+	/*
 	if (a->v > b->v) return 1;
 	if (a->k < b->v) return -1;
+	*/
+	if (a->s > b->s) return -1;
+	if (a->s < b->s) return 1;
 	return 0;
 }
 
@@ -216,7 +220,7 @@ int chash_set_nodes(struct chash *ch, str_t *list, uint8_t n)
 	ch->hash_ring = ch_malloc(ch, sizeof(kv_t) * vnodes);
 	if (ch->hash_ring == NULL) return CH_ERR_MALLOC;
 
-	int i, j, len;
+	int i, j, len, sn=0;
 	kv_t *ptr = ch->hash_ring;
 	char key_buf[KEY_BUFFER_LEN];
 	for (i=0; i<n; i++) {
@@ -225,6 +229,8 @@ int chash_set_nodes(struct chash *ch, str_t *list, uint8_t n)
 					list[i].len, list[i].ptr, ch->delimiter, j);
 			ptr->k = ch->node_hash(key_buf, len);
 			ptr->v = i;
+			ptr->s = sn;
+			sn++;
 			ptr++;
 		}
 	}

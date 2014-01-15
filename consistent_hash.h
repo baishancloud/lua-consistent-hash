@@ -10,6 +10,7 @@ typedef struct str_s {
 typedef struct kv_s {
 	uint32_t		k;
 	uint32_t		v;
+	uint32_t		s;
 } kv_t;				// 64bit
 
 struct chash {
