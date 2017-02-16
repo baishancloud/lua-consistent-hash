@@ -13,47 +13,79 @@ local servers = {
     "a.9", "b.9", "c.9", "d.9", "e.9", "f.9", "g.9", "h.9", "i.9",
 }
 
-local i, server, s2
-local server_count = {}
 
-for i, server in ipairs(servers) do
-    server_count[ server ] = 0
+function test_no_dup()
+    local chash = consistenthash:new( servers )
+    local n = 1024 * 1024
+
+    for i = 0, n do
+        local a, b, c = chash:get(tostring( i ), 3)
+        assert(a ~= b, 'a b')
+        assert(b ~= c, 'b c')
+        assert(c ~= a, 'c a')
+    end
 end
 
-local chash = consistenthash:new( servers )
 
-local a, b, c
-a, b, c = chash:get( '1', "3" )
-print( a )
-print( b )
-print( c )
+function test_distribution()
 
+    local chash = consistenthash:new( servers )
+    local n = 1024 * 1024
 
-table.remove( servers, 1 )
--- segment fault passing nil
-local y = consistenthash:new( servers )
+    local count = {}
 
-local xx, yy
+    for i, server in ipairs(servers) do
+        count[ server ] = 0
+    end
 
-i = 1
-n = 1024 * 1024
-n = 1
--- n = 100
-inc = 0
-while i <= n do
-    xx, server, yy = consistenthash.get( chash, tostring( i ), 3 )
-    print(xx, server, yy)
-    -- s2 = y:get( i )
-    -- if s2 ~= server then
-    --     inc = inc + 1
-    --     -- print( inc )
-    -- end
-    server_count[ server ] = server_count[ server ] + 1
-    -- print( server )
-    i = i + 1
+    for i = 0, n do
+        local a, b, c = chash:get(tostring( i ), 3)
+        count[ a ] = count[ a ] + 1
+        count[ b ] = count[ b ] + 1
+        count[ c ] = count[ c ] + 1
+    end
+
+    for server, num in pairs(count) do
+        -- print( server .. ' = ' ..  tostring( num ) )
+    end
+
+    local min = n
+    local max = 0
+    for server, v in pairs(count) do
+        if min > v then
+            min = v
+        end
+        if max < v then
+            max = v
+        end
+    end
+
+    print('min', min, 'max', max)
+    assert((max-min)/ max < 0.2)
+    assert((max-min)/ max > 0)
 end
--- print( inc )
 
-for server, num in pairs(server_count) do
-    print( server .. ' = ' ..  tostring( num ) )
+
+function test_basic()
+    local chash = consistenthash:new( servers )
+
+    local count = {}
+
+    for i, server in ipairs(servers) do
+        count[ server ] = 0
+    end
+
+    local a, b, c
+    a, b, c = chash:get( '1', "3" )
+    print( a )
+    print( b )
+    print( c )
+    assert(count[a] ~= nil, 'a is in server table')
+    assert(count[b] ~= nil, 'b is in server table')
+    assert(count[c] ~= nil, 'c is in server table')
 end
+
+
+test_basic()
+test_distribution()
+test_no_dup()
