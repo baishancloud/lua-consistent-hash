@@ -1,4 +1,4 @@
-local tt = require( "consistenthash" )
+local consistenthash = require( "consistenthash" )
 
 local servers = {
     "a.0", "b.0", "c.0", "d.0", "e.0", "f.0", "g.0", "h.0", "i.0",
@@ -20,33 +20,29 @@ for i, server in ipairs(servers) do
     server_count[ server ] = 0
 end
 
-local x = tt:new( servers )
+local chash = consistenthash:new( servers )
 
 local a, b, c
-a, b, c = x:get( '1', "3" )
+a, b, c = chash:get( '1', "3" )
 print( a )
 print( b )
 print( c )
 
 
-
-function main()
-    return tt.get, x, "123"
-end
-
-
 table.remove( servers, 1 )
 -- segment fault passing nil
-local y = tt:new( servers )
+local y = consistenthash:new( servers )
 
 local xx, yy
 
 i = 1
 n = 1024 * 1024
+n = 1
 -- n = 100
 inc = 0
-while i<=n do
-    xx, server, yy = tt.get( x, tostring( i ), 3 )
+while i <= n do
+    xx, server, yy = consistenthash.get( chash, tostring( i ), 3 )
+    print(xx, server, yy)
     -- s2 = y:get( i )
     -- if s2 ~= server then
     --     inc = inc + 1
