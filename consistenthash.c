@@ -528,7 +528,6 @@ static int lch_new( lua_State *L ) {
     int           weight;
     int           n;
     int           l;
-    uint32_t      hash_value;
     str_t        *nm;
     str_t        *name;
     const char   *err;
@@ -542,8 +541,11 @@ static int lch_new( lua_State *L ) {
     size_t        namebuf_size;
     size_t        namebuf_p;
     char          hashstr_buf[ MAX_NODE_HASH_SRC_LEN ];
-    md5_t ctx;
-    u_char md5_rst[ 16 ];
+    md5_t         ctx;
+
+    /* store md5 result and hash_value at the same place. */
+    uint32_t      hash_value[16/sizeof(uint32_t)];
+    u_char       *md5_rst = (u_char*)hash_value;
 
 
     luaL_checktype( L, 2, LUA_TTABLE );
@@ -652,17 +654,16 @@ static int lch_new( lua_State *L ) {
         name = &conti->names[ i ];
 
         for ( k = 0; k < weight; k++ ) {
-            l = snprintf( hashstr_buf, MAX_NODE_HASH_SRC_LEN,  "%.*s-%ui", name->len, name->data, k );
+            l = snprintf( hashstr_buf, MAX_NODE_HASH_SRC_LEN,  "%.*s-%ui", (int)name->len, name->data, k );
 
             md5_init( &ctx );
             md5_update( &ctx, hashstr_buf, l );
             md5_final( md5_rst, &ctx );
             dd( "md5 of %.*s is %x %x", l, hashstr_buf, md5_rst[0], md5_rst[1] );
-            hash_value = *( uint32_t* )md5_rst;
 
             /* hash_value = crc32_short( hashstr_buf, l ); */
 
-            conti->nodes[ i_nodes ].point = hash_value;
+            conti->nodes[ i_nodes ].point = hash_value[0];
             conti->nodes[ i_nodes ].name_idx = i;
 
             dd( "built node: hash %p -> %d", hash_value, i );
@@ -726,7 +727,6 @@ static int lch_close( lua_State *L ) {
 static const luaL_Reg lch_funcs[] = {
     { "new",    lch_new },
     { "get",    lch_get },
-    /* { "echo",    lch_echo }, */
     { NULL, NULL }
 };
 
