@@ -95,7 +95,7 @@ static const u_char *md5_body(md5_t *ctx, const u_char *data, size_t size);
 
 
 void
-md5_init(md5_t *ctx)
+md5_init(md5_t *ctx)	//初始链接变量
 {
     ctx->a = 0x67452301;
     ctx->b = 0xefcdab89;
@@ -107,7 +107,7 @@ md5_init(md5_t *ctx)
 
 
 void
-md5_update(md5_t *ctx, const void *data, size_t size)
+md5_update(md5_t *ctx, const void *data, size_t size)	//将字节串分组处理
 {
     size_t  used, free;
 
@@ -138,7 +138,7 @@ md5_update(md5_t *ctx, const void *data, size_t size)
 
 
 void
-md5_final(u_char result[16], md5_t *ctx)
+md5_final(u_char result[16], md5_t *ctx)	//byte转unsigned int
 {
     size_t  used, free;
 
@@ -239,7 +239,7 @@ md5_final(u_char result[16], md5_t *ctx)
  */
 
 static const u_char *
-md5_body(md5_t *ctx, const u_char *data, size_t size)
+md5_body(md5_t *ctx, const u_char *data, size_t size)	//四轮操作
 {
     uint32_t       a, b, c, d;
     uint32_t       saved_a, saved_b, saved_c, saved_d;
@@ -364,7 +364,7 @@ uint32_t *crc32_table_short = crc32_table16;
 
 
 static inline uint32_t
-crc32_short(u_char *p, size_t len)
+crc32_short(u_char *p, size_t len)	//crc编码
 {
     u_char    c;
     uint32_t  crc;
@@ -382,7 +382,7 @@ crc32_short(u_char *p, size_t len)
 
 
 static int
-node_cmp( const hashnode_t *a, const hashnode_t *b )
+node_cmp( const hashnode_t *a, const hashnode_t *b )	//比较节点的值，a<b返回-1，a>b返回1，相等返回0
 {
     if ( a->point < b->point ) {
         return -1;
@@ -411,7 +411,7 @@ point_search( continuum_t *conti, uint32_t p )
     }
 
 
-    while ( s + 1 < e ) {
+    while ( s + 1 < e ) {	//二分查找
         mid = ( s+e ) / 2;
         if ( p <= conti->nodes[ mid ].point ) {
             e = mid;
@@ -447,13 +447,13 @@ static int
 lch_get( lua_State *L )
 {
     void        **p;
-    continuum_t  *conti;
+    continuum_t  *conti;	//一个continuum结构指针
 
     size_t        len;
-    const char   *s;
-    uint32_t      hash_value;
-    size_t        i_node;
-    int           n_replica;
+    const char   *s;	//一个给定的内容
+    uint32_t      hash_value;	//这个内容经编码得到的hash值
+    size_t        i_node;	//用于节点计数？？？
+    int           n_replica;	//节点的虚拟节点个数？？？
     int           i;
     str_t        *name;
     int           i_name;
@@ -465,33 +465,33 @@ lch_get( lua_State *L )
     p = get_continuum( L, 1 );
     conti = *p;
 
-    s = luaL_checklstring( L, 2, &len );
+    s = luaL_checklstring( L, 2, &len );	//判断是否为字符串，是则返回长度，否则填充1
 
-    if ( lua_isnumber( L, 3 ) ) {
-        n_replica = lua_tointeger( L, 3 );
-        if ( n_replica > MAX_REPLICA ) {
+    if ( lua_isnumber( L, 3 ) ) {	//？？？
+        n_replica = lua_tointeger( L, 3 );	//得到这个节点的虚拟节点个数
+		if ( n_replica > MAX_REPLICA ) {	//虚拟节点最多为16个
             n_replica = MAX_REPLICA;
         }
-        if ( n_replica >= conti->n ) {
+        if ( n_replica >= conti->n ) {	//虚拟节点个数不超过已有空间的大小（不知道continuum的翻译成什么比较好……）
             n_replica = conti->n;
         }
     }
     else {
-        n_replica = 1;
+        n_replica = 1;	//？？？
     }
 
-    derr( "n_replica=%d", n_replica );
+    derr( "n_replica=%d", n_replica );	//打印n_replica
 
-    hash_value = ( uint32_t )crc32_short( ( u_char* )s, len );
-    hash_value = hash_value >> 18;
-    derr( "hash value of %.*s is %d", len, s, hash_value );
+    hash_value = ( uint32_t )crc32_short( ( u_char* )s, len );	//把s进行crc编码
+    hash_value = hash_value >> 18;	//右移18位
+    derr( "hash value of %.*s is %d", len, s, hash_value );		//打印哈希值
 
-    i_node = conti->buckets[ hash_value ];
+    i_node = conti->buckets[ hash_value ];	//？？？在continuum里按照刚得到的哈希值找到的位置赋值给i_node
 
     for ( i = 0; i < MAX_REPLICA; i++ ) {
-        i_names[i] = -1;
+        i_names[i] = -1;	//初始化所有虚拟节点名称为-1
     }
-    n_names = 0;
+    n_names = 0;	//？？？当前用的虚拟节点数为0
 
     while ( n_names < n_replica ) {
 
@@ -552,7 +552,7 @@ lch_new( lua_State *L ) {
 
     /* store md5 result and hash_value at the same place. */
     uint32_t      hash_value[16/sizeof(uint32_t)];
-    u_char       *md5_rst = (u_char*)hash_value;
+    u_char       *md5_rst = (u_char*)hash_value;	//加入新数据时，先得到一个hash值
 
 
     luaL_checktype( L, 2, LUA_TTABLE );
@@ -564,7 +564,7 @@ lch_new( lua_State *L ) {
     namebuf_size = 0;
     lua_pushnil( L ); /* iterate all table entries from nil key */
 
-    while ( lua_next( L, -2 ) ) {
+    while ( lua_next( L, -2 ) ) {	//遍历，把索引中的key值压入堆栈
 
         s = lua_tolstring( L, -1, &len );
         if ( NULL == s ) {
@@ -580,15 +580,15 @@ lch_new( lua_State *L ) {
         }
 
         lua_pop( L, 1 ); /* pop up value, leave key in stack */
-        n++;
+        n++;	//每遍历一个key值，n计数加一
         namebuf_size += len;
         n_nodes += N_NODE_PER_NAME * 1; /* TODO weights */
 
         dd( "entry: %s len=%d, total namebuf_size=%d", s, len, namebuf_size );
     }
 
-    if ( 0 == n ) {
-        luaL_argerror( L, 2, "Empty table" );
+    if ( 0 == n ) {		//如果table为空，输出错误信息
+		luaL_argerror( L, 2, "Empty table" );
         return 0;
     }
 
@@ -602,14 +602,14 @@ lch_new( lua_State *L ) {
 
     dd( "total mem size=%d", size );
 
-    buf = malloc( size );
+    buf = malloc( size );	//分配内存
     if ( NULL == buf ) {
         derr( "Failure allocation memory of size=%d", size );
         return 0;
     }
 
     dinfo( "Allocated continuum mem: %p", buf );
-
+	//为continuum_t中每一成员分配内存
     conti = ( continuum_t* )buf;
     buf += sizeof( continuum_t );
 
@@ -635,7 +635,7 @@ lch_new( lua_State *L ) {
     namebuf_p = 0;
     lua_pushnil( L );
 
-    while ( lua_next( L, -2 ) ) {
+    while ( lua_next( L, -2 ) ) {	//？？？遍历打印信息
 
         s = lua_tolstring( L, -1, &len );
 
@@ -806,9 +806,9 @@ main( int argc, char **argv )
         exit( 1 );
     }
 
-    lua_getglobal( L, "main" );
+    lua_getglobal( L, "main" );	//把main压入栈
 
-    rc = lua_pcall( L, 0, 3, 0 );
+    rc = lua_pcall( L, 0, 3, 0 );	//以保护模式调用函数，有错误会捕获并把信息压入栈
     if ( 0 != rc )
     {
         err = lua_tostring( L, -1 );
