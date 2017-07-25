@@ -203,6 +203,7 @@ md5_final(u_char result[16], md5_t *ctx)
 #define H(x, y, z)  ((x) ^ (y) ^ (z))
 #define I(x, y, z)  ((y) ^ ((x) | ~(z)))
 
+
 /*
  * The MD5 transformation for all four rounds.
  */
@@ -212,6 +213,7 @@ md5_final(u_char result[16], md5_t *ctx)
     (a) = (((a) << (s)) | (((a) & 0xffffffff) >> (32 - (s))));                \
     (a) += (b)
 
+
 /*
  * SET() reads 4 input bytes in little-endian byte order and stores them
  * in a properly aligned word in host byte order.
@@ -220,7 +222,6 @@ md5_final(u_char result[16], md5_t *ctx)
  * memory accesses is just an optimization.  Nothing will break if it
  * does not work.
  */
-
 
 #define SET(n)                                                                \
     (block[n] =                                                               \
@@ -361,6 +362,7 @@ static uint32_t  crc32_table16[] = {
 
 uint32_t *crc32_table_short = crc32_table16;
 
+
 static inline uint32_t
 crc32_short(u_char *p, size_t len)
 {
@@ -393,7 +395,8 @@ node_cmp( const hashnode_t *a, const hashnode_t *b )
     }
 }
 
-    static size_t
+
+static size_t
 point_search( continuum_t *conti, uint32_t p )
 {
     /* find the point larger than or equal to p */
@@ -422,7 +425,8 @@ point_search( continuum_t *conti, uint32_t p )
 
 }
 
-    static void*
+
+static void*
 get_continuum( lua_State *L, int i )
 {
     void **p;
@@ -438,7 +442,8 @@ get_continuum( lua_State *L, int i )
     return p;
 }
 
-    static int
+
+static int
 lch_get( lua_State *L )
 {
     void        **p;
@@ -518,7 +523,9 @@ lch_get( lua_State *L )
     return n_replica;
 }
 
-static int lch_new( lua_State *L ) {
+
+static int 
+lch_new( lua_State *L ) {
 
     void        **p;
     continuum_t  *conti;
@@ -707,7 +714,9 @@ static int lch_new( lua_State *L ) {
     return 1;
 }
 
-static int lch_close( lua_State *L ) {
+
+static int 
+lch_close( lua_State *L ) {
     void **p;
     dinfo( "gc called" );
 
@@ -730,7 +739,9 @@ static const luaL_Reg lch_funcs[] = {
     { NULL, NULL }
 };
 
-int luaopen_consistenthash(lua_State *L) {
+
+int 
+luaopen_consistenthash(lua_State *L) {
 
     luaL_newlib(L, lch_funcs);
 
@@ -759,6 +770,7 @@ int luaopen_consistenthash(lua_State *L) {
     return 1;
 }
 
+
 lua_State *init_lua_env()
 {
     lua_State  *L;
@@ -780,7 +792,8 @@ lua_State *init_lua_env()
     return L;
 }
 
-    int
+
+int
 main( int argc, char **argv )
 {
     int         rc;
